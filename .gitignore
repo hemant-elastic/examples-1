@@ -34,3 +34,5 @@ CHANGES.md
 TODO.md
 /Miscellaneous/docker/full_stack_example/logs/
 /Exploring Public Datasets/cdc_nutrition_exercise_patterns/scripts/LLCP2013.ASC
+k8s-observability-with-eck/cert.yaml
+k8s-observability-with-eck/ELASTICSEARCH_PASSWORD
