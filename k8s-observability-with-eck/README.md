@@ -6,6 +6,34 @@ Collect logs, metrics, and APM data from a Kubernetes environment, and the appli
 # About GKE
 GKE == Google Kubernetes Engine. If you have never used GKE, you might want to go through the [GKE quickstart](https://cloud.google.com/kubernetes-engine/docs/quickstart).  
 
+1. Create a Kubernetes cluster in GCP using your GCP account. See screenshots below:
+
+Go to the "Kuberentes Engine" page, click on "CREATE CLUSTER":
+
+![Kubernetes Cluster](images/k8s-1.png "Kubernetes Cluster")
+
+Give your cluster a name. Configure your "Machine Type" as "4vCPUs, 8GB of memory". You will have to use the customize option to be able to do this.
+
+![Kubernetes Cluster](images/k8s-2.png "Kubernetes Cluster")
+
+2. Install [Googl Cloud SDK](https://cloud.google.com/sdk/install) and [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) if you have not done so.
+
+3. Setup your local environment using the following command. Make sure everything matches your cluster. "sherryger" is the name of my Kubernetes cluster. "sherry.ger@elastic.co" is my GCP account ID.
+
+```
+gcloud config set project elastic-sa
+gcloud config set compute/zone us-west1-b
+gcloud config set container/cluster sherryger
+gcloud auth login
+gcloud container clusters get-credentials sherryger --zone us-west1-b --project elastic-sa
+kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=sherry.ger@elastic.co
+kubectl create clusterrolebinding sherry.ger-cluster-admin-binding --clusterrole=cluster-admin --user=sherry.ger@elastic.co
+```
+
+If you are successful, you should see the following output
+
+`clusterrolebinding.rbac.authorization.k8s.io "sherry.ger-cluster-admin-binding" created`
+
 # Deploy a k8s cluster in GKE
 
 ## Create your k8s cluster
