@@ -6,19 +6,31 @@ Collect logs, metrics, and APM data from a Kubernetes environment, and the appli
 # About GKE
 GKE == Google Kubernetes Engine. If you have never used GKE, you might want to go through the [GKE quickstart](https://cloud.google.com/kubernetes-engine/docs/quickstart).  
 
-1. Create a Kubernetes cluster in GCP using your GCP account. See screenshots below:
+# Deploy a k8s cluster in GKE
+
+## Create your k8s cluster
+Open https://console.cloud.google.com/kubernetes/ and create a cluster. See screenshots below:
 
 Go to the "Kuberentes Engine" page, click on "CREATE CLUSTER":
 
 ![Kubernetes Cluster](images/k8s-1.png "Kubernetes Cluster")
 
-Give your cluster a name. Configure your "Machine Type" as "4vCPUs, 8GB of memory". You will have to use the customize option to be able to do this.
+Give your cluster a name.
 
 ![Kubernetes Cluster](images/k8s-2.png "Kubernetes Cluster")
 
-2. Install [Googl Cloud SDK](https://cloud.google.com/sdk/install) and [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) if you have not done so.
+You can accept the defaults with these exceptions:
 
-3. Setup your local environment using the following command. Make sure everything matches your cluster. "sherryger" is the name of my Kubernetes cluster. "sherry.ger@elastic.co" is my GCP account ID.
+- Give the cluster a good name
+- Use the latest `Master Version` (at the time of writing, this is 1.13.6-gke.13)
+- 2 vCPUs per node (this will change the Memory to 7.5GB)
+- Under `Availability, networking, security, and additional features` disable `Stackdriver legacy features` as we will be collecting our own logs and metrics.
+
+## Set up your environment
+
+1. Install [Googl Cloud SDK](https://cloud.google.com/sdk/install) and [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) if you have not done so.
+
+2. Setup your local environment using the following command. Make sure everything matches your cluster. "sherryger" is the name of my Kubernetes cluster. "sherry.ger@elastic.co" is my GCP account ID.
 
 ```
 gcloud config set project elastic-sa
@@ -34,31 +46,21 @@ If you are successful, you should see the following output
 
 `clusterrolebinding.rbac.authorization.k8s.io "sherry.ger-cluster-admin-binding" created`
 
-# Deploy a k8s cluster in GKE
-
-## Create your k8s cluster
-Open https://console.cloud.google.com/kubernetes/ and create a cluster.  You can accept the defaults with these exceptions:
-
-- Give the cluster a good name
-- Use the latest `Master Version` (at the time of writing, this is 1.13.6-gke.6)
-- 2 vCPUs per node (this will change the Memory to 7.5GB)
-- Under `Availability, networking, security, and additional features` disable `Stackdriver legacy features` as we will be collecting our own logs and metrics.
-
 ## Connect to your k8s cluster
-When the cluster is ready click on the `Connect` button in the [console](https://console.cloud.google.com/kubernetes/).  If you have the `gcloud` utilities and `kubectl` installed on your workstation you can click the button to copy the connection string and work from your own shell.  Otherwise click `Run in cloud shell` (generally my preference).
+When the cluster is ready click on the `Connect` button in the [console](https://console.cloud.google.com/kubernetes/).  If you have the `gcloud` utilities and `kubectl` installed on your workstation you can click the button to copy the connection string and work from your own shell.  Otherwise click `Run in cloud shell`.
 
-If you do use the cloud shell change your prompt, I use:
+If you do use the cloud shell change your prompt:
 ```
 export PS1='\[\033[01;32m\]\[\033[00m\]:\[\033[01;34m\]\W\[\033[00m\]\$ '
 ```
 
 ## Grab the elastic/examples GitHub repo
-This README and the files needed for the demo app are in elastic/examples.  Clone the repo:
+This README and the files needed for the demo app are in sherryger/examples1. (The orginal repo is located at elasic/examples.) Clone the repo:
 ```
 mkdir k8s-observability-with-eck
 cd k8s-observability-with-eck
-git clone https://github.com/elastic/examples.git
-cd examples/k8s-observability-with-eck
+git clone https://github.com/sherry-ger/examples-1.git
+cd examples-1/k8s-observability-with-eck
 ```
 
 # Deploy your Elasticsearch cluster and Kibana Server
@@ -66,7 +68,7 @@ First you will deploy the Elastic Cloud on Kubernetes operator, and then use the
 ## Deploy the Elastic Cloud on Kubernetes Operator
 
 ```bash
-kubectl apply -f https://download.elastic.co/downloads/eck/0.8.1/all-in-one.yaml
+kubectl apply -f all-in-one.yaml
 ```
 
 You will see several `CRDs` deployed, these are Custom Resource Definitions which extend the Kubernetes API to allow best practice Elasticsearch clusters and Kibana servers to be deployed.  The operator will then be started in its own k8s namespace, `elastic-system`.  
@@ -78,19 +80,10 @@ kubectl logs -f elastic-operator-0 -n elastic-system
 When you see `starting the webhook server` you can `CTRL-C` from the log tail and continue.
 
 # Setup persistent storage
-Elasticsearch should have persistent storage, and it should be fast.  Google allows SSDs to be used, and this bit of YAML will create a `Storage Class` that uses SSDs:
+Elasticsearch should have persistent storage, and it should be fast.  Google allows SSDs to be used, and `storageClassSSD.yaml` will create a `Storage Class` that uses SSDs:
 
 ```
-cat <<EOF | kubectl apply -f -
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
-metadata:
-  name: ssd
-provisioner: kubernetes.io/gce-pd
-volumeBindingMode: WaitForFirstConsumer
-parameters:
-  type: pd-ssd
-EOF
+kubectl apply -f storageClassSSD.yaml
 ```
 
 Once this is applied, SSD based persistent storage can be requested by adding this little bit to the YAML used to request an Elasticsearch cluster (you will see this in context when the cluster gets deployed):
@@ -112,34 +105,17 @@ volumeClaimTemplates:
 
 ## Elasticsearch cluster
 
-Rather than have you apply a YAML file on disk, this is copied and pasted so that you look at it and see what is involved.  Starting at the top:
+Please have a look at `elasticsearch.yaml` file.
 
 - The type of thing being deployed is Elasticsearch
 - The name of the cluster is `elasticsearch-sample`
 - Use version 7.2.0
-- Make this a three node cluster
-- Mount a 200Gi volume `data` on each node using the storage class `ssd` that we just created
+- Make this a three node cluster, with 1 hot node and 2 warm nodes
+- Mount a 100Gi volume `data` on hot node using the storage class `ssd` and a 200Gi volume on warm nodes
+- The LoadBalancer will expose the `elasticsearch` service endpoint to the outside world
 
 ```
-cat <<EOF | kubectl apply -f -
-apiVersion: elasticsearch.k8s.elastic.co/v1alpha1
-kind: Elasticsearch
-metadata:
-  name: elasticsearch-sample
-spec:
-  version: "7.2.0"
-  nodes:
-  - nodeCount: 3
-    volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes: [ "ReadWriteOnce" ]
-        storageClassName: "ssd"
-        resources:
-          requests:
-            storage: 200Gi
-EOF
+kubectl apply -f elasticsearch.yml
 ```
 
 ### Check status
@@ -154,13 +130,16 @@ Look for **green**:
 NAME                   HEALTH   NODES   VERSION   PHASE         AGE
 elasticsearch-sample   green    3       7.2.0     Operational   3m
 ```
+If `kubectl get elasticsearch` does not work for you, please try the following command instead:
 
+```
+kubectl get elasticsearch -o=custom-columns=NAME:.metadata.name,HEALTH:.status.health,NODES:.status.availableNodes,VERSION:.spec.version
+```
 ## Kibana
 
 ### LoadBalancer discussion
-Because the Kibana server is secured with a non-default password a LoadBalancer can be deployed with Kibana.  If you do not want to deploy a LoadBalancer because of cost or policy, then simply remove the `http` section of the below YAML.
 
-Next deploy Kibana.  Detailing the YAML below:
+Next deploy Kibana using the `kibana.yaml`.  Detailing the YAML below:
 
 - Deploy Kibana
 - Name it kibana-sample
@@ -170,21 +149,7 @@ Next deploy Kibana.  Detailing the YAML below:
 - Deploy a LoadBalancer service pointing to Kibana
 
 ```
-cat <<EOF | kubectl apply -f -
-apiVersion: kibana.k8s.elastic.co/v1alpha1
-kind: Kibana
-metadata:
-  name: kibana-sample
-spec:
-  version: "7.2.0"
-  nodeCount: 1
-  elasticsearchRef:
-    name: "elasticsearch-sample"
-  http:
-    service:
-      spec:
-        type: LoadBalancer
-EOF
+kubectl apply -f kibana.yaml
 ```
 
 Check the progress with `kubectl get pods -w` and then verify the health check with:
@@ -199,6 +164,11 @@ NAME            HEALTH   NODES   VERSION   AGE
 kibana-sample   green    1       7.2.0     3m
 ```
 
+Again, if `kubectl get kibana` does not work for you, please try:
+
+```
+kubectl get kibana -o=custom-columns=NAME:.metadata.name,HEALTH:.status.health,NODES:.status.availableNodes,VERSION:.spec.version
+```
 # Deploy Beats
 
 The operators perform many tasks for the user.  Included in the list is setting up TLS certs and securing
