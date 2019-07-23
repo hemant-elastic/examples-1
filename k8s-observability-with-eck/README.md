@@ -37,21 +37,32 @@ gcloud config set project elastic-sa
 gcloud config set compute/zone us-west1-b
 gcloud config set container/cluster sherryger
 gcloud auth login
-gcloud container clusters get-credentials sherryger --zone us-west1-b --project elastic-sa
-kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=sherry.ger@elastic.co
-kubectl create clusterrolebinding sherry.ger-cluster-admin-binding --clusterrole=cluster-admin --user=sherry.ger@elastic.co
+```
+
+## Connect to your k8s cluster
+When the cluster is ready click on the `Connect` button in the [console](https://console.cloud.google.com/kubernetes/).  If you have the `gcloud` utilities and `kubectl` installed on your workstation you can click the button to copy the connection string and work from your own shell.  
+
+1. The connection string from the console should look like similar to the following:
+
+```gcloud container clusters get-credentials <CLUSTER_NAME> --zone <DEFAULT_ZONE> --project <PROJECT_NAME>```
+
+By default, the credentials are written to `HOME/.kube/config`  For details, please see (https://cloud.google.com/sdk/gcloud/reference/container/clusters/get-credentials)
+
+2. Create a cluster level role binding so you can edit system level namespace.
+
+```kubectl create clusterrolebinding cluster-admin-binding  --clusterrole=cluster-admin --user=<USER_NAME>```
+
+Usually, <USER_NAME> is the email address of the user.
+
+3. To workaround [this issue](https://coreos.com/operators/prometheus/docs/latest/troubleshooting.html), use the following command
+
+```
+kubectl create clusterrolebinding sherry.ger-cluster-admin-binding --clusterrole=cluster-admin --user=sherry.ger@elastic.co 
 ```
 
 If you are successful, you should see the following output
 
-`clusterrolebinding.rbac.authorization.k8s.io "sherry.ger-cluster-admin-binding" created`
-
-## Connect to your k8s cluster
-When the cluster is ready click on the `Connect` button in the [console](https://console.cloud.google.com/kubernetes/).  If you have the `gcloud` utilities and `kubectl` installed on your workstation you can click the button to copy the connection string and work from your own shell.  Otherwise click `Run in cloud shell`.
-
-If you do use the cloud shell change your prompt:
-```
-export PS1='\[\033[01;32m\]\[\033[00m\]:\[\033[01;34m\]\W\[\033[00m\]\$ '
+```clusterrolebinding.rbac.authorization.k8s.io "sherry.ger-cluster-admin-binding" created```
 ```
 
 ## Grab the elastic/examples GitHub repo
@@ -135,6 +146,17 @@ If `kubectl get elasticsearch` does not work for you, please try the following c
 ```
 kubectl get elasticsearch -o=custom-columns=NAME:.metadata.name,HEALTH:.status.health,NODES:.status.availableNodes,VERSION:.spec.version
 ```
+
+## APM Server
+
+We will need to deploy APM Server for the PCF exercise later.  We won't be using it in the monitoring project.
+
+```bash
+kubectl apply -f apmserver.yaml
+```
+
+Notice the APM Server is deployed into the `default` namespace.
+
 ## Kibana
 
 ### LoadBalancer discussion
@@ -179,6 +201,7 @@ the Elasticsearch cluster.  To connect Filebeat and Metricbeat you need to setup
 You will need:
 * The CA cert for TLS
 * Service names
+* APM Server token
 * User name and password
 
 ## Get the CA cert
@@ -221,6 +244,28 @@ Note: Indent the cert like it is in the sample.
 Create the ConfigMap
 ```bash
 kubectl create -f cert.yaml
+```
+
+# Extract the APM Server token:
+### Find the name of the APM Server token:
+```bash
+kubectl get secret apm-server-sample-apm-server -o=json
+```
+
+You will see output like this.
+
+```
+{
+    "apiVersion": "v1",
+    "data": {
+        "secret-token": "MmNyZ3BwdzZzcG5oZnA3dzRyODYyams5"
+    }
+```
+
+Decode and record the secret token and we will be using it later.
+
+```
+echo `kubectl get secret apm-server-sample-apm-server -o=jsonpath='{.data.secret-token}' | base64 --decode`
 ```
 
 # Extract the username and password:
