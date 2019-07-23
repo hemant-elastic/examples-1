@@ -62,7 +62,7 @@ kubectl create clusterrolebinding sherry.ger-cluster-admin-binding --clusterrole
 
 If you are successful, you should see the following output
 
-```clusterrolebinding.rbac.authorization.k8s.io "sherry.ger-cluster-admin-binding" created```
+```clusterrolebinding.rbac.authorization.k8s.io "sherry.ger-cluster-admin-binding" created
 ```
 
 ## Grab the elastic/examples GitHub repo
@@ -74,7 +74,7 @@ git clone https://github.com/sherry-ger/examples-1.git
 cd examples-1/k8s-observability-with-eck
 ```
 
-# Deploy your Elasticsearch cluster and Kibana Server
+# Deploy your Elasticsearch cluster, APM Server, and Kibana Server
 First you will deploy the Elastic Cloud on Kubernetes operator, and then use the operator to deploy Elasticsearch and Kibana
 ## Deploy the Elastic Cloud on Kubernetes Operator
 
