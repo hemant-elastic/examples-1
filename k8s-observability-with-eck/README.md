@@ -82,7 +82,7 @@ First you will deploy the Elastic Cloud on Kubernetes operator, and then use the
 kubectl apply -f all-in-one.yaml
 ```
 
-You will see several `CRDs` deployed, these are Custom Resource Definitions which extend the Kubernetes API to allow best practice Elasticsearch clusters and Kibana servers to be deployed.  The operator will then be started in its own k8s namespace, `elastic-system`.  
+You will see several `CRDs` deployed, these are Custom Resource Definitions which extend the Kubernetes API to allow best practice Elasticsearch clusters, APM Server, and Kibana servers to be deployed.  The operator will then be started in its own k8s namespace, `elastic-system`.  
 
 Check the logs:
 ```
@@ -146,6 +146,22 @@ If `kubectl get elasticsearch` does not work for you, please try the following c
 ```
 kubectl get elasticsearch -o=custom-columns=NAME:.metadata.name,HEALTH:.status.health,NODES:.status.availableNodes,VERSION:.spec.version
 ```
+
+If the cluster health is not **green**, we may need to do some debugging. To debug an issue,
+
+1. Find the id of the pod that is having issues
+
+```
+kubectl get pods
+```
+
+2. Use the following command to determine the reason a pod failed or failed to deploy.
+
+```kubectl describe pod elasticsearch-sample-es-l5pn85mbb7```
+
+Please note, you may need to specify namespace if the resource is not found in the default namespace.
+
+```k describe pod filebeat-dynamic-8wm5k --namespace=kube-system```
 
 ## APM Server
 
