@@ -161,7 +161,7 @@ kubectl get pods
 
 Please note, you may need to specify a namespace if the resource is not found in the default namespace.
 
-```k describe pod filebeat-dynamic-8wm5k --namespace=kube-system```
+```kubectl describe pod filebeat-dynamic-8wm5k --namespace=kube-system```
 
 ## APM Server
 
@@ -339,11 +339,12 @@ kubectl get services
 
 Returns:
 ```bash
-NAME                                TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)        AGE
-elasticsearch-sample-es             ClusterIP      10.23.241.250   <none>          9200/TCP       2h
-elasticsearch-sample-es-discovery   ClusterIP      None            <none>          9300/TCP       2h
-kibana-sample-kibana                ClusterIP      10.23.240.17    <none>          5601/TCP       2h
-kubernetes                          ClusterIP      10.23.240.1     <none>          443/TCP        3h
+NAME                                        TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)          AGE
+service/apm-server-sample-apm-server        LoadBalancer   10.83.246.116   35.230.13.59    8200:32603/TCP   2d
+service/elasticsearch-sample-es             LoadBalancer   10.83.248.204   35.203.47.40   9200:31274/TCP   2d
+service/elasticsearch-sample-es-discovery   ClusterIP      None            <none>          9300/TCP         2d
+service/kibana-sample-kibana                LoadBalancer   10.83.246.36    34.83.81.29     5601:31058/TCP   2d
+service/kubernetes                          ClusterIP      10.83.240.1     <none>          443/TCP          126d
 ```
 
 The service name for Elasticsearch is `elasticsearch-sample-es`.  The namespace is
