@@ -65,7 +65,7 @@ If you are successful, you should see the following output
 ```clusterrolebinding.rbac.authorization.k8s.io "sherry.ger-cluster-admin-binding" created
 ```
 
-## Grab the elastic/examples GitHub repo
+## Grab the GitHub repo
 This README and the files needed for the demo app are in sherryger/examples1. (The orginal repo is located at elasic/examples.) Clone the repo:
 ```
 mkdir k8s-observability-with-eck
@@ -159,13 +159,13 @@ kubectl get pods
 
 ```kubectl describe pod elasticsearch-sample-es-l5pn85mbb7```
 
-Please note, you may need to specify namespace if the resource is not found in the default namespace.
+Please note, you may need to specify a namespace if the resource is not found in the default namespace.
 
 ```k describe pod filebeat-dynamic-8wm5k --namespace=kube-system```
 
 ## APM Server
 
-We will need to deploy APM Server for the PCF exercise later.  We won't be using it in the monitoring project.
+We will deploy an APM Server for the PCF exercise later.  We won't be using it in the monitoring project.
 
 ```bash
 kubectl apply -f apmserver.yaml
