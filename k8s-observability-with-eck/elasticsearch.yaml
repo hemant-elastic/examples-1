@@ -24,7 +24,7 @@ spec:
                 memory: 2Gi
                 cpu: 1
     nodeCount: 0
-    ## this shows how to request 2Gi of persistent data storage for pods in this topology element
+    ## this shows how to request 200Gi of persistent data storage for pods in this topology element
     volumeClaimTemplates:
     - metadata:
         name: data
@@ -53,7 +53,7 @@ spec:
                 memory: 2Gi
                 cpu: 1
     nodeCount: 1
-    ## this shows how to request 2Gi of persistent data storage for pods in this topology element
+    ## this shows how to request 100Gi of persistent data storage for pods in this topology element
     volumeClaimTemplates:
     - metadata:
         name: data
