@@ -60,11 +60,6 @@ Usually, <USER_NAME> is the email address of the user.
 kubectl create clusterrolebinding sherry.ger-cluster-admin-binding --clusterrole=cluster-admin --user=sherry.ger@elastic.co 
 ```
 
-If you are successful, you should see the following output
-
-```clusterrolebinding.rbac.authorization.k8s.io "sherry.ger-cluster-admin-binding" created
-```
-
 ## Grab the GitHub repo
 This README and the files needed for the demo app are in sherryger/examples1. (The orginal repo is located at elasic/examples.) Clone the repo:
 ```
@@ -126,7 +121,7 @@ Please have a look at `elasticsearch.yaml` file.
 - The LoadBalancer will expose the `elasticsearch` service endpoint to the outside world
 
 ```
-kubectl apply -f elasticsearch.yml
+kubectl apply -f elasticsearch.yaml
 ```
 
 ### Check status
